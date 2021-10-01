@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="theme-color" content="#000000" />
+        <title>js audio record</title>
+        <style>
+            #root {
+                width: 100%;
+                display: flex;
+                justify-content: center;
+                flex-direction: column;
+                align-items: center;
+            }
+            .wrapper {
+                width: 50%;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+            }
+            .wrapper > * {
+                margin-top: 20px;
+            }
+            #download {
+                opacity: 50%;
+            }
+            button {
+                width: 50px;
+                height: 35px;
+                outline: none;
+                border: none;
+                border-radius: 6px;
+                color: white;
+                cursor: pointer;
+            }
+            button:disabled {
+               opacity: 50%;
+               pointer-events: none;
+            }
+            #start {
+                background-color: rgba(68, 226, 36, 0.877);
+            }
+            #stop {
+                background-color: rgba(241, 40, 40, 0.877);
+            }
+        </style>
+    </head>
+    <body>
+        <div id="root">
+            <div class="wrapper">
+                <a id="download">Download</a>
+                <button id="stop">Stop</button>
+                <button id="start">start</button>
+                <audio controls id="result" src=""></audio>
+                <p style="color: red; opacity: 0; transition: all 0.3s;" id="record">recording ...</p>
+            </div>
+        </div>
+    </body>
+
+    <script>
+        const downloadLink = document.getElementById('download');
+        const stopButton = document.getElementById('stop');
+        stopButton.setAttribute('disabled', true);
+        const startButton = document.getElementById('start');
+        const result = document.getElementById('result');
+        const record = document.getElementById('record');
+
+        const handleSuccess = function(stream) {
+            const options = {mimeType: 'audio/webm'};
+            const recordedChunks = [];
+            const mediaRecorder = new MediaRecorder(stream, options);
+
+            mediaRecorder.addEventListener('dataavailable', function(e) {
+            if (e.data.size > 0) recordedChunks.push(e.data);
+            });
+
+            mediaRecorder.addEventListener('stop', function() {
+            downloadLink.href = URL.createObjectURL(new Blob(recordedChunks));
+            downloadLink.download = `${new Date().getTime()}.wav`;
+            
+            result.src = URL.createObjectURL(new Blob(recordedChunks))
+            
+            let blob = URL.createObjectURL(new Blob(recordedChunks));
+
+            let data = new FormData();
+            data.append("file", new File([blob], new Date().getTime()));
+            for (var pair of data.entries()) {
+                console.log(pair[1]); 
+            }
+            });
+
+            stopButton.addEventListener('click', function() {
+                downloadLink.style.opacity = 100;
+                mediaRecorder.stop();
+                stopButton.setAttribute('disabled', true);
+                startButton.removeAttribute('disabled');
+                record.style.opacity = 0;
+            });
+
+            mediaRecorder.start();
+        };
+
+        startButton.addEventListener('click', e => {
+            navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+            .then((stream) => {
+                record.style.opacity = 100;
+                stopButton.removeAttribute('disabled');
+                startButton.setAttribute('disabled', true);
+                handleSuccess(stream);
+            });
+        })
+
+    </script>
+</html>
