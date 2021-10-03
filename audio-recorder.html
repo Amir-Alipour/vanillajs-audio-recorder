@@ -119,10 +119,12 @@
 
         result.src = URL.createObjectURL(new Blob(recordedChunks));
 
-        let blob = URL.createObjectURL(new Blob(recordedChunks));
+        let blob = new Blob(recordedChunks, {
+          'type': 'audio/mp3'
+        });
 
         let data = new FormData();
-        data.append("file", new File([blob], new Date().getTime()));
+        data.append("file", blob, new Date().getTime()));
         for (var pair of data.entries()) {
           console.log(pair[1]);
         }
